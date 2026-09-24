@@ -113,6 +113,11 @@ class TicketIssueResource extends Resource
                     ->badge()
                     ->color(fn (\Illuminate\Database\Eloquent\Model $record): string => $record->category?->color ?? 'gray')
                     ->sortable(),
+                Tables\Columns\TextColumn::make('assetLocation.name')
+                    ->label('Location')
+                    ->sortable()
+                    ->searchable()
+                    ->toggleable(),
                 Tables\Columns\TextColumn::make('assignees.name')
                     ->label('Assigned To')
                     ->badge()
@@ -151,7 +156,42 @@ class TicketIssueResource extends Resource
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
-                //
+                Tables\Filters\SelectFilter::make('user_id')
+                    ->multiple()
+                    ->relationship('user', 'name')
+                    ->label('User')
+                    ->searchable()
+                    ->preload(),
+                Tables\Filters\SelectFilter::make('ticket_category_id')
+                    ->multiple()
+                    ->relationship('category', 'name')
+                    ->label('Ticket Category')
+                    ->searchable()
+                    ->preload(),
+                Tables\Filters\SelectFilter::make('assignees')
+                    ->multiple()
+                    ->relationship('assignees', 'name')
+                    ->label('Assigned To')
+                    ->searchable()
+                    ->preload(),
+                Tables\Filters\SelectFilter::make('priority')
+                    ->multiple()
+                    ->options([
+                        'low' => 'Low',
+                        'medium' => 'Medium',
+                        'high' => 'High',
+                        'urgent' => 'Urgent',
+                    ])
+                    ->label('Priority'),
+                Tables\Filters\SelectFilter::make('status')
+                    ->multiple()
+                    ->options([
+                        'open' => 'Open',
+                        'in_progress' => 'In Progress',
+                        'resolved' => 'Resolved',
+                        'closed' => 'Closed',
+                    ])
+                    ->label('Status'),
             ])
             ->actions([
                 Tables\Actions\ViewAction::make(),
