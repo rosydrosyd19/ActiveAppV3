@@ -18,7 +18,7 @@ class TicketIssueResource extends Resource
     protected static ?string $navigationGroup = 'Ticketing';
     protected static ?string $model = TicketIssue::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static ?string $navigationIcon = 'heroicon-o-ticket';
 
     public static function form(Form $form): Form
     {
@@ -72,6 +72,26 @@ class TicketIssueResource extends Resource
                     ->image()
                     ->directory('ticket-photos')
                     ->nullable(),
+                Forms\Components\Section::make('Location & Asset')
+                    ->description('Pilih lokasi terlebih dahulu untuk memfilter aset yang tersedia.')
+                    ->schema([
+                        Forms\Components\Select::make('asset_location_id')
+                            ->relationship('assetLocation', 'name')
+                            ->label('Location')
+                            ->searchable()
+                            ->preload()
+                            ->live()
+                            ->afterStateUpdated(fn (\Filament\Forms\Set $set) => $set('asset_item_id', null)),
+                        Forms\Components\Select::make('asset_item_id')
+                            ->relationship('assetItem', 'name', fn (Builder $query, \Filament\Forms\Get $get) => 
+                                $query->where('asset_location_id', $get('asset_location_id'))
+                            )
+                            ->label('Asset')
+                            ->searchable()
+                            ->preload()
+                            ->disabled(fn (\Filament\Forms\Get $get): bool => ! filled($get('asset_location_id'))),
+                    ])
+                    ->columns(2),
                 Forms\Components\Textarea::make('problem')
                     ->visibleOn(['edit', 'view'])
                     ->nullable(),
@@ -102,6 +122,21 @@ class TicketIssueResource extends Resource
                 Tables\Columns\TextColumn::make('priority')
                     ->searchable(),
                 Tables\Columns\TextColumn::make('status')
+                    ->badge()
+                    ->formatStateUsing(fn (string $state): string => match ($state) {
+                        'open' => 'Open',
+                        'in_progress' => 'In Progress',
+                        'resolved' => 'Resolved',
+                        'closed' => 'Closed',
+                        default => ucfirst($state),
+                    })
+                    ->color(fn (string $state): string => match ($state) {
+                        'open' => 'danger',
+                        'in_progress' => 'warning',
+                        'resolved' => 'success',
+                        'closed' => 'gray',
+                        default => 'gray',
+                    })
                     ->searchable(),
                 Tables\Columns\TextColumn::make('resolved_at')
                     ->dateTime()

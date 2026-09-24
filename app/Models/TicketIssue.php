@@ -10,4 +10,6 @@ class TicketIssue extends Model {
     public function user() { return $this->belongsTo(User::class); }
     public function assignees() { return $this->belongsToMany(User::class, 'ticket_issue_user', 'ticket_issue_id', 'user_id'); }
     public function replies() { return $this->hasMany(TicketReply::class); }
+    public function assetLocation() { return $this->belongsTo(AssetLocation::class, 'asset_location_id'); }
+    public function assetItem() { return $this->belongsTo(AssetItem::class, 'asset_item_id'); }
 }
