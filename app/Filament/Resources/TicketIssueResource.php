@@ -156,6 +156,12 @@ class TicketIssueResource extends Resource
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
+                Tables\Filters\SelectFilter::make('asset_location_id')
+                    ->multiple()
+                    ->relationship('assetLocation', 'name')
+                    ->label('Location')
+                    ->searchable()
+                    ->preload(),
                 Tables\Filters\SelectFilter::make('user_id')
                     ->multiple()
                     ->relationship('user', 'name')
