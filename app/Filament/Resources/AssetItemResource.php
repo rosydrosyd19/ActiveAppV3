@@ -8,6 +8,7 @@ use App\Models\AssetItem;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
+use Filament\Support\RawJs;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
@@ -24,21 +25,46 @@ class AssetItemResource extends Resource
     {
         return $form
             ->schema([
-                Forms\Components\TextInput::make('asset_category_id')
-                    ->required()
-                    ->numeric(),
-                Forms\Components\TextInput::make('asset_location_id')
-                    ->numeric(),
+                Forms\Components\Select::make('asset_category_id')
+                    ->relationship('category', 'name')
+                    ->label('Category')
+                    ->searchable()
+                    ->preload()
+                    ->required(),
+                Forms\Components\Select::make('asset_location_id')
+                    ->relationship('location', 'name')
+                    ->label('Location')
+                    ->searchable()
+                    ->preload(),
                 Forms\Components\TextInput::make('name')
                     ->required(),
                 Forms\Components\TextInput::make('code'),
                 Forms\Components\TextInput::make('serial_number'),
                 Forms\Components\TextInput::make('purchase_price')
+                    ->prefix('Rp')
+                    ->mask(RawJs::make('$money($input)'))
+                    ->stripCharacters(',')
                     ->numeric(),
                 Forms\Components\DatePicker::make('purchase_date'),
-                Forms\Components\TextInput::make('condition')
+                Forms\Components\Select::make('condition')
+                    ->options([
+                        'new' => 'New',
+                        'good' => 'Good',
+                        'poor' => 'Poor',
+                    ])
+                    ->default('good')
                     ->required(),
-                Forms\Components\TextInput::make('status')
+                Forms\Components\Select::make('status')
+                    ->options([
+                        'in_use' => 'In Use (Sedang Digunakan)',
+                        'in_stock' => 'In Stock / Storage (Tersimpan di Gudang)',
+                        'in_repair' => 'In Repair / Maintenance (Dalam Perbaikan)',
+                        'pending' => 'Pending / Provisioning (Dalam Persiapan)',
+                        'lost_stolen' => 'Lost / Stolen (Hilang atau Dicuri)',
+                        'retired_disposed' => 'Retired / Disposed (Pensiun / Dibuang)',
+                        'expired' => 'Expired (Kadaluarsa)',
+                    ])
+                    ->default('in_use')
                     ->required(),
                 Forms\Components\Textarea::make('notes')
                     ->columnSpanFull(),
@@ -49,12 +75,14 @@ class AssetItemResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('asset_category_id')
-                    ->numeric()
-                    ->sortable(),
-                Tables\Columns\TextColumn::make('asset_location_id')
-                    ->numeric()
-                    ->sortable(),
+                Tables\Columns\TextColumn::make('category.name')
+                    ->label('Category')
+                    ->sortable()
+                    ->searchable(),
+                Tables\Columns\TextColumn::make('location.name')
+                    ->label('Location')
+                    ->sortable()
+                    ->searchable(),
                 Tables\Columns\TextColumn::make('name')
                     ->searchable(),
                 Tables\Columns\TextColumn::make('code')
@@ -62,14 +90,49 @@ class AssetItemResource extends Resource
                 Tables\Columns\TextColumn::make('serial_number')
                     ->searchable(),
                 Tables\Columns\TextColumn::make('purchase_price')
-                    ->numeric()
+                    ->prefix('Rp ')
+                    ->numeric(thousandsSeparator: ',')
                     ->sortable(),
                 Tables\Columns\TextColumn::make('purchase_date')
                     ->date()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('condition')
+                    ->badge()
+                    ->formatStateUsing(fn (?string $state): string => match ($state) {
+                        'new' => 'New',
+                        'good' => 'Good',
+                        'poor' => 'Poor',
+                        default => ucfirst($state ?? '-'),
+                    })
+                    ->color(fn (?string $state): string => match ($state) {
+                        'new' => 'success',
+                        'good' => 'info',
+                        'poor' => 'danger',
+                        default => 'gray',
+                    })
                     ->searchable(),
                 Tables\Columns\TextColumn::make('status')
+                    ->badge()
+                    ->formatStateUsing(fn (?string $state): string => match ($state) {
+                        'in_use' => 'In Use',
+                        'in_stock' => 'In Stock / Storage',
+                        'in_repair' => 'In Repair / Maintenance',
+                        'pending' => 'Pending / Provisioning',
+                        'lost_stolen' => 'Lost / Stolen',
+                        'retired_disposed' => 'Retired / Disposed',
+                        'expired' => 'Expired',
+                        default => ucfirst(str_replace('_', ' ', $state ?? '-')),
+                    })
+                    ->color(fn (?string $state): string => match ($state) {
+                        'in_use' => 'success',
+                        'in_stock' => 'info',
+                        'in_repair' => 'warning',
+                        'pending' => 'gray',
+                        'lost_stolen' => 'danger',
+                        'retired_disposed' => 'danger',
+                        'expired' => 'danger',
+                        default => 'gray',
+                    })
                     ->searchable(),
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
@@ -81,7 +144,16 @@ class AssetItemResource extends Resource
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
-                //
+                Tables\Filters\SelectFilter::make('status')
+                    ->options([
+                        'in_use' => 'In Use (Sedang Digunakan)',
+                        'in_stock' => 'In Stock / Storage (Tersimpan di Gudang)',
+                        'in_repair' => 'In Repair / Maintenance (Dalam Perbaikan)',
+                        'pending' => 'Pending / Provisioning (Dalam Persiapan)',
+                        'lost_stolen' => 'Lost / Stolen (Hilang atau Dicuri)',
+                        'retired_disposed' => 'Retired / Disposed (Pensiun / Dibuang)',
+                        'expired' => 'Expired (Kadaluarsa)',
+                    ]),
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),

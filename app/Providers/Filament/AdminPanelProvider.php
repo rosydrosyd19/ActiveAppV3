@@ -26,7 +26,8 @@ class AdminPanelProvider extends PanelProvider
             ->default()
             ->id('admin')
             ->path('admin')
-            ->login()
+            ->login(\App\Filament\Pages\Auth\FaceLogin::class)
+            ->registration(\App\Filament\Pages\Auth\FaceRegister::class)
             ->sidebarCollapsibleOnDesktop()
 
             ->colors([

@@ -18,7 +18,7 @@ class AssetCategoryResource extends Resource
     protected static ?string $navigationGroup = 'Asset Management';
     protected static ?string $model = AssetCategory::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static ?string $navigationIcon = 'heroicon-o-circle-stack';
 
     public static function form(Form $form): Form
     {

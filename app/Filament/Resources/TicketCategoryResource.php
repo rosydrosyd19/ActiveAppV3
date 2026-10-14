@@ -18,7 +18,7 @@ class TicketCategoryResource extends Resource
     protected static ?string $navigationGroup = 'Ticketing';
     protected static ?string $model = TicketCategory::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static ?string $navigationIcon = 'heroicon-o-circle-stack';
 
     public static function form(Form $form): Form
     {

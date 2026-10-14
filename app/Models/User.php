@@ -49,5 +49,10 @@ class User extends Authenticatable
             'password' => 'hashed',
         ];
     }
+
+    public function faceData()
+    {
+        return $this->hasOne(SystemAuthFaceData::class);
+    }
 }
 
